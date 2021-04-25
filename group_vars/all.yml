@@ -1,0 +1,3 @@
+---
+# This one will break when master is Python 2.
+domain: "{{ 'афакеман.рф'.encode('idna').decode('ascii') }}"

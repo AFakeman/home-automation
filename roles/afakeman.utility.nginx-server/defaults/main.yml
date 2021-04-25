@@ -1,0 +1,8 @@
+snippet: |
+  location / {
+  {% if proxy_target.split(':')[0].startswith('http') %}
+      proxy_pass {{ proxy_target }};
+  {% else %}
+      proxy_pass http://{{ proxy_target }};
+  {% endif %}
+  }

@@ -1,0 +1,12 @@
+- name: Check if variables are set
+  assert:
+    that:
+      - server_name is defined
+      - subdomain is defined
+      - domain is defined
+
+- name: Copy the template to the nginx directory
+  template:
+    src: "server.conf.j2"
+    dest: "{{ server_name }}.conf"
+  notify: reload nginx
