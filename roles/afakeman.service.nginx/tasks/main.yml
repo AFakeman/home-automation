@@ -1,0 +1,49 @@
+---
+- name: Ensure Nginx
+  homebrew:
+    name:
+      - nginx
+
+- name: Ensure directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: true
+  loop:
+    - /usr/local/etc/nginx/conf.d/
+    - /usr/local/etc/nginx/includes.d/
+    - /usr/local/var/www/
+    - /usr/local/var/log/nginx/
+
+- name: Ensure Nginx config file
+  template:
+    src: nginx.conf.j2
+    dest: /usr/local/etc/nginx/nginx.conf
+    mode: 0644
+  notify: reload nginx
+
+- name: Ensure Nginx includes
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/local/etc/nginx/includes.d/{{ item }}"
+    mode: 0644
+  loop:
+    - ssl.conf
+    - hsts.conf
+  notify: reload nginx service
+
+- name: Ensure LaunchAgent
+  become: true
+  template:
+    src: org.nginx.server.plist.j2
+    dest: /Library/LaunchDaemons/org.nginx.server.plist
+    owner: root
+    group: admin
+    mode: 0644
+  notify: reload nginx service
+
+- name: Ensure nginx is started
+  become: true
+  launchd:
+    state: started
+    name: org.nginx.server

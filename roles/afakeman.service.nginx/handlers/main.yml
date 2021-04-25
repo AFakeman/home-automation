@@ -1,0 +1,6 @@
+---
+- name: reload nginx service
+  include_tasks: reload_nginx_service.yml
+
+- name: reload nginx
+  include_tasks: reload_nginx.yml

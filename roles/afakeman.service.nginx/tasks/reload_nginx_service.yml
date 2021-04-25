@@ -1,0 +1,6 @@
+- become: true
+  command: /usr/local/bin/nginx -t
+- become: true
+  launchd:
+    state: reloaded
+    name: org.nginx.server

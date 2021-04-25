@@ -1,0 +1,15 @@
+- become: true
+  command: /usr/local/bin/nginx -t
+
+- name: Get nginx pid
+  slurp:
+    src: /usr/local/var/run/nginx.pid
+  register: nginx_pid
+
+- name: Send HUP to nginx
+  become: true
+  command:
+    argv:
+      - kill
+      - -HUP
+      - "{{ nginx_pid.content | b64decode | trim }}"
