@@ -8,5 +8,5 @@
 - name: Copy the template to the nginx directory
   template:
     src: "server.conf.j2"
-    dest: "{{ server_name }}.conf"
+    dest: "/usr/local/etc/nginx/conf.d/{{ server_name }}.conf"
   notify: reload nginx
