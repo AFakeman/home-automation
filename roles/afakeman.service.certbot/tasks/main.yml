@@ -1,0 +1,19 @@
+- name: Ensure Certbot
+  homebrew:
+    name:
+      - certbot
+
+- name: Ensure update script
+  become: true
+  copy:
+    src: certbot-renew
+    dest: /usr/local/bin/certbot-renew
+    owner: root
+    mode: 0644
+
+- name: Ensure update LaunchDaemon
+  become: true
+  template:
+    src: com.afakeman.certbot.plist.j2
+    dest: /Library/LaunchDaemons/com.afakeman.certbot.plist
+  notify: reload launchdaemon

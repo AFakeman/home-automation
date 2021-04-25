@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: afakeman.utility.letsencrypt
+    vars:
+      certbot_domain: "{{ subdomain }}.{{ domain }}"

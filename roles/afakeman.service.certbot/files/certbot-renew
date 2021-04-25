@@ -1,0 +1,2 @@
+#!/bin/bash
+/usr/local/bin/certbot renew >> /usr/local/var/log/certbot.log 2>&1 && kill -HUP $(pgrep nginx)

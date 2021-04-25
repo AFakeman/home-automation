@@ -1,0 +1,5 @@
+- name: reload launchdaemon
+  become: true
+  launchd:
+    state: reloaded
+    name: com.afakeman.certbot

@@ -1,0 +1,14 @@
+- name: Ensure certbot certificate
+  become: true
+  command:
+    argv:
+      - /usr/local/bin/certbot
+      - certonly
+      - -n
+      - --webroot
+      - --webroot-path
+      - /usr/local/var/www/
+      - -d
+      - "{{ certbot_domain }}"
+  register: certbot_result
+  changed_when: "'no action taken' not in certbot_result.stdout"
