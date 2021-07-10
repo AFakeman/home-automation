@@ -4,6 +4,7 @@
       - server_name is defined
       - subdomain is defined
       - domain is defined
+    quiet: true
 
 - name: Copy the template to the nginx directory
   template:
