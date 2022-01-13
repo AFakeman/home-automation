@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: mother-host
   roles:
     - name: afakeman.service.nginx
     - name: afakeman.utility.nginx-server
@@ -39,7 +39,7 @@
         subdomain: "{{ 'торренты'.encode('idna').decode('ascii') }}"
         proxy_target: localhost:9091
 
-- hosts: all
+- hosts: mother-host
   roles:
     - name: afakeman.utility.nginx-server
       vars:
@@ -76,7 +76,7 @@
               root /usr/local/var/www/;
           }
 
-- hosts: all
+- hosts: vpn
   become: true
   roles:
     - name: afakeman.service.wireguard
@@ -93,7 +93,7 @@
           - src: 443
             dest: 8443
 
-- hosts: all
+- hosts: mitm
   become: true
   roles:
     - name: afakeman.service.wireguard
