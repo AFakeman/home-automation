@@ -1,0 +1,15 @@
+---
+
+wireguard_tunnel_name: vpn
+wireguard_network: 192.168.65.0/24
+wireguard_ip_address: 192.168.65.1/24
+wireguard_listen_port: 51820
+wireguard_dns: 1.1.1.1
+wireguard_peers: []
+# - key:
+#   address:
+wireguard_enable_forwarding: true
+wireguard_port_remapping: []
+# - src: 443
+#   dest: 8081
+wireguard_private_key: ""

@@ -1,3 +1,40 @@
 ---
 # This one will break when master is Python 2.
 domain: "{{ 'афакеман.рф'.encode('idna').decode('ascii') }}"
+
+tunnel_private_key: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35346262343131346265313565363737393633373531666565323733346430643864633031353138
+          6665613061383530643364353661643864613637303664660a336334356337663330346331333334
+          38323434613861353631623661623430303165363862326534373938363234623333373533343836
+          3334396134623038330a376633643536323462323865373931623763336463313561623038393165
+          36316164393831356366323665376432356230613463306238656131613762623961336461623737
+          6563303031373961373264666439386236623562633431633930
+
+tunnel_ip_address:
+  vpn: 192.168.65.1/24
+  mitm: 192.168.64.1/24
+
+tunnel_networks:
+  vpn: 192.168.65.0/24
+  mitm: 192.168.64.0/24
+
+tunnel_peers:
+  vpn:
+    - key: 1RbBS+6YmYPMztyH0SwTMIS35jE0KdYVdE0i87TUHlc=
+      address: 192.168.65.2/32
+    - key: Z4C1ETPbmiKWdSkt93wjmRgyfLujq8frwxF1omH8Szw=
+      address: 192.168.65.3/32
+    - key: d2MZn65oz8DbfZDVdhqFdmNS1rQuNBm+rMEmPwGJ4WE=
+      address: 192.168.65.4/32
+    - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
+      address: 192.168.65.5/32
+  mitm:
+    - key: 1RbBS+6YmYPMztyH0SwTMIS35jE0KdYVdE0i87TUHlc=
+      address: 192.168.64.2/32
+    - key: Z4C1ETPbmiKWdSkt93wjmRgyfLujq8frwxF1omH8Szw=
+      address: 192.168.64.3/32
+    - key: d2MZn65oz8DbfZDVdhqFdmNS1rQuNBm+rMEmPwGJ4WE=
+      address: 192.168.64.4/32
+    - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
+      address: 192.168.64.5/32

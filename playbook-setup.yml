@@ -75,3 +75,30 @@
           location /robots.txt {
               root /usr/local/var/www/;
           }
+
+- hosts: all
+  become: true
+  roles:
+    - name: afakeman.service.wireguard
+      vars:
+        wireguard_tunnel_name: mitm
+        wireguard_listen_port: 51819
+        wireguard_ip_address: "{{ tunnel_ip_address.mitm }}"
+        wireguard_private_key: "{{ tunnel_private_key }}"
+        wireguard_peers: "{{ tunnel_peers.mitm }}"
+        wireguard_network: "{{ tunnel_networks.mitm }}"
+        wireguard_port_remapping:
+          - src: 80
+            dest: 8443
+          - src: 443
+            dest: 8443
+
+- hosts: all
+  become: true
+  roles:
+    - name: afakeman.service.wireguard
+      vars:
+        wireguard_tunnel_name: vpn
+        wireguard_private_key: "{{ tunnel_private_key }}"
+        wireguard_peers: "{{ tunnel_peers.vpn }}"
+        wireguard_network: "{{ tunnel_networks.vpn }}"

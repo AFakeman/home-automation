@@ -1,0 +1,47 @@
+---
+
+- name: Ensure wireguard-tools
+  become: false
+  homebrew:
+    name:
+      - wireguard-tools
+
+- name: Ensure wireguard config directory
+  file:
+    path: "{{ wireguard_config_folder }}"
+    mode: 0755
+    owner: root
+    group: admin
+
+- name: Ensure postup and postdown scripts
+  copy:
+    src: "{{ item }}"
+    dest: "{{ wireguard_config_folder }}"
+    mode: 0744
+    owner: root
+    groups: admin
+  loop:
+    - postup.sh
+    - postdown.sh
+  notify:
+    - reload tunnel
+
+- name: Ensure wireguard config
+  template:
+    src: "config.conf.j2"
+    dest: "{{ wireguard_config_file }}"
+    mode: 0644
+    owner: root
+    groups: admin
+  notify:
+    - reload tunnel
+
+- name: Ensure wireguard daemon config
+  template:
+    src: "daemon.plist.j2"
+    dest: "{{ wireguard_launchctl_config }}"
+    mode: 0644
+    owner: root
+    groups: admin
+  notify:
+    - reload tunnel
