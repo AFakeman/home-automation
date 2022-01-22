@@ -1,0 +1,24 @@
+[Interface]
+PrivateKey = {{ wireguard_private_key }}
+ListenPort = {{ wireguard_listen_port }}
+Address = {{ wireguard_ip_address }}
+DNS = 1.1.1.1
+{% if wireguard_enable_forwarding %}
+# This ensures our peers continue to report their Wireguard-
+# assigned IPs while connected to the VPN. This is required for
+# their traffic to get routed correctly by the firewall rules we
+# crafted earlier with pf.
+PostUp = /usr/sbin/sysctl -w net.inet.ip.forwarding=1
+PostUp = /usr/sbin/sysctl -w net.inet6.ip6.forwarding=1
+# Adds the firewall routing rule on Wireguard server startup
+PostUp = /usr/local/etc/wireguard/postup.sh {{ wireguard_tunnel_name }} {{ wireguard_ip_address }}{% for remap in wireguard_port_remapping %} {{ remap.src }}:{{ remap.dest }}{% endfor %}
+
+# Removes the firewall routing rule on Wireguard server shutdown
+PostDown = /usr/local/etc/wireguard/postdown.sh {{ wireguard_tunnel_name }}
+{% endif %}
+{% for peer in wireguard_peers %}
+
+[Peer]
+PublicKey = {{ peer.key }}
+AllowedIPs = {{ peer.address }}
+{% endfor %}

@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: mother-host
   roles:
     - name: afakeman.service.nginx
     - name: afakeman.utility.nginx-server
@@ -39,7 +39,7 @@
         subdomain: "{{ 'торренты'.encode('idna').decode('ascii') }}"
         proxy_target: localhost:9091
 
-- hosts: all
+- hosts: mother-host
   roles:
     - name: afakeman.utility.nginx-server
       vars:
@@ -75,3 +75,30 @@
           location /robots.txt {
               root /usr/local/var/www/;
           }
+
+- hosts: vpn
+  become: true
+  roles:
+    - name: afakeman.service.wireguard
+      vars:
+        wireguard_tunnel_name: mitm
+        wireguard_listen_port: 51819
+        wireguard_ip_address: "{{ tunnel_ip_address.mitm }}"
+        wireguard_private_key: "{{ tunnel_private_key }}"
+        wireguard_peers: "{{ tunnel_peers.mitm }}"
+        wireguard_network: "{{ tunnel_networks.mitm }}"
+        wireguard_port_remapping:
+          - src: 80
+            dest: 8443
+          - src: 443
+            dest: 8443
+
+- hosts: mitm
+  become: true
+  roles:
+    - name: afakeman.service.wireguard
+      vars:
+        wireguard_tunnel_name: vpn
+        wireguard_private_key: "{{ tunnel_private_key }}"
+        wireguard_peers: "{{ tunnel_peers.vpn }}"
+        wireguard_network: "{{ tunnel_networks.vpn }}"

@@ -1,0 +1,6 @@
+---
+
+wireguard_config_folder: "/usr/local/etc/wireguard/"
+wireguard_config_file: "{{ wireguard_config_folder }}/{{ wireguard_tunnel_name }}.conf"
+wireguard_launchctl_service: "com.wireguard.{{ wireguard_tunnel_name }}"
+wireguard_launchctl_config: "/Library/LaunchDaemons/{{ wireguard_launchctl_service }}.plist"

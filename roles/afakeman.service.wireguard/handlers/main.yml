@@ -1,0 +1,5 @@
+- name: reload tunnel
+  become: true
+  launchd:
+    state: reloaded
+    name: "{{ wireguard_launchctl_service }}"
