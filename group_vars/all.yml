@@ -45,3 +45,6 @@ git_repo_list:
     desc: Мой блог (https://блог.афакеман.рф)
     hooks:
       post-receive: "{{ lookup('file', 'blog/post-receive') }}"
+
+  - name: home-automation
+    desc: Скрипты для деплоя датацентра
