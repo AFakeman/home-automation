@@ -1,0 +1,5 @@
+---
+- name: reload launchdaemon
+  launchd:
+    state: reloaded
+    name: com.afakeman.borgmatic

@@ -1,0 +1,17 @@
+location:
+  local_path: /usr/local/bin/borg
+  source_directories:
+{% for directory in borgmatic_directories %}
+    - "{{ directory }}"
+{% endfor %}
+
+  repositories:
+{% for repository in borgmatic_repositories %}
+    - "{{ repository }}"
+{% endfor %}
+
+storage:
+  encryption_passphrase: "{{ borgmatic_keyphrase }}"
+
+retention:
+  {{ borgmatic_retention | to_nice_yaml | indent(2) }}

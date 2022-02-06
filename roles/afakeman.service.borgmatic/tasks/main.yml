@@ -1,0 +1,27 @@
+---
+
+- name: Borgmatic | Ensure Borgmatic install
+  homebrew:
+    name:
+      - borgbackup
+      - borgmatic
+
+- name: Borgmatic | Ensure Borgmatic config
+  template:
+    src: borgmatic.yml.j2
+    dest: /usr/local/etc/borgmatic.yml
+    mode: 0600
+    owner: "{{ ansible_user }}"
+
+- name: Borgmatic | Init borgmatic
+  command:
+    cmd: /usr/local/bin/borgmatic init --config /usr/local/etc/borgmatic.yml -e keyfile
+
+- name: Borgmatic | Complete backup
+  command: /usr/local/bin/borgmatic --config /usr/local/etc/borgmatic.yml
+
+- name: Borgmatic | Ensure backup LaunchDaemon
+  template:
+    src: com.afakeman.borgmatic.plist.j2
+    dest: /Users/{{ ansible_user }}/Library/LaunchAgents/com.afakeman.borgmatic.plist
+  notify: reload launchdaemon
