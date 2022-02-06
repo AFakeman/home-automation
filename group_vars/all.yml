@@ -39,3 +39,9 @@ tunnel_peers:
       address: 192.168.64.4/32
     - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
       address: 192.168.64.5/32
+
+git_repo_list:
+  - name: blog
+    desc: Мой блог (https://блог.афакеман.рф)
+    hooks:
+      post-receive: "{{ lookup('file', 'blog/post-receive') }}"

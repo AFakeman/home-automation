@@ -19,3 +19,13 @@
     mode: 0755
     owner: "{{ ansible_user }}"
     group: admin
+
+- name: Git | Ensure git repositories
+  include_role:
+    name: afakeman.utility.git-repo
+  loop: "{{ git_repo_list }}"
+  vars:
+    repo_name: "{{ repo.name }}"
+    repo_hooks: "{{ repo.hooks }}"
+  loop_control:
+    loop_var: repo

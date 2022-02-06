@@ -1,0 +1,51 @@
+---
+- name: Git | Check if repository exists and is bare
+  command:
+    cmd: git rev-parse --is-bare-repository
+    chdir: "{{ repo_base_path }}/{{ repo_name }}"
+  changed_when: false
+  check_mode: false
+  failed_when:
+    - _git_state.rc != 0
+    - "_git_state.stderr != 'fatal: not a git repository (or any of the parent directories): .git'"
+  register: _git_state
+
+- name: Git | Fail if repository exists but not bare
+  assert:
+    that: _git_state.stdout != "false"
+    msg: "Repository {{ repo_base_path }}/{{ repo_name }} exists and is not bare"
+
+- name: Git | Ensure repository
+  when: "_git_state.rc != 0"
+  block:
+    - name: Git | Ensure server repository
+      git:
+        repo: "{{ repo_upstream }}"
+        dest: "{{ repo_base_path }}/{{ repo_name }}"
+        bare: true
+        update: false
+      when: "repo_upstream is defined"
+
+    - name: Git | Ensure bare repository
+      command: git init {{ repo_name }} --bare
+      when: "repo_upstream is not defined"
+
+- name: Git | Ensure post-update hook to work with dumb HTTP protocol
+  copy:
+    dest: "{{ repo_base_path }}/{{ repo_name }}/hooks/post-update"
+    content: |
+      #!/bin/sh
+
+      exec git update-server-info
+    owner: "{{ ansible_user }}"
+    group: admin
+    mode: 0755
+
+- name: Git | Ensure hooks
+  copy:
+    dest: "{{ repo_base_path }}/{{ repo_name }}/hooks/{{ item.key }}"
+    content: "{{ item.value }}\n"
+    owner: "{{ ansible_user }}"
+    group: admin
+    mode: 0755
+  loop: "{{ repo_hooks | dict2items }}"

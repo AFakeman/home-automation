@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+DEST=/usr/local/var/www/blog/
+BARE_REPO=$PWD
+DIR=$(mktemp -d)
+
+trap "rm -rf '$DIR'" EXIT
+
+cd "$DIR"
+git clone "$BARE_REPO" .
+/usr/local/bin/hugo
+rsync -r --checksum --delete public/ "$DEST"
