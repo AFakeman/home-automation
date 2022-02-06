@@ -1,4 +1,11 @@
 ---
+- name: Git | Ensure repository exists
+  file:
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: 0755
+    dest: "{{ repo_base_path }}/{{ repo_name }}"
+
 - name: Git | Check if repository exists and is bare
   command:
     cmd: git rev-parse --is-bare-repository
@@ -27,7 +34,9 @@
       when: "repo_upstream is defined"
 
     - name: Git | Ensure bare repository
-      command: git init {{ repo_name }} --bare
+      command:
+        cmd: git init {{ repo_name }} --bare
+        chdir: "{{ repo_base_path }}"
       when: "repo_upstream is not defined"
 
 - name: Git | Ensure post-update hook to work with dumb HTTP protocol
@@ -49,3 +58,5 @@
     group: admin
     mode: 0755
   loop: "{{ repo_hooks | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

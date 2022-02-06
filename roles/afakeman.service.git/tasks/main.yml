@@ -26,6 +26,6 @@
   loop: "{{ git_repo_list }}"
   vars:
     repo_name: "{{ repo.name }}"
-    repo_hooks: "{{ repo.hooks }}"
+    repo_hooks: "{{ repo.hooks | default({}) }}"
   loop_control:
     loop_var: repo
