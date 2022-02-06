@@ -11,3 +11,7 @@
     src: "server.conf.j2"
     dest: "/usr/local/etc/nginx/conf.d/{{ server_name }}.conf"
   notify: reload nginx
+
+- name: Check nginx configuration
+  command: /usr/local/bin/nginx -T
+  become: true

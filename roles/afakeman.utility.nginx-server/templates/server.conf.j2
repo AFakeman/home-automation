@@ -2,8 +2,8 @@ server {
     listen 443 ssl;
     server_name "{{ subdomain }}.*";
 
-    ssl_certificate /etc/letsencrypt/live/{{ subdomain }}.{{ domain }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ subdomain }}.{{ domain }}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
 
     include include/ssl.conf;
     include include/hsts.conf;
