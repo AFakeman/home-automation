@@ -1,6 +1,7 @@
 ---
+domain: 'афакеман.рф'
 # This one will break when master is Python 2.
-domain: "{{ 'афакеман.рф'.encode('idna').decode('ascii') }}"
+domain_idn: "{{ domain.encode('idna').decode('ascii') }}"
 
 tunnel_private_key: !vault |
           $ANSIBLE_VAULT;1.1;AES256
