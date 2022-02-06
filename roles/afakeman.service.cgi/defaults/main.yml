@@ -1,0 +1,3 @@
+---
+cgi_port: 8533
+cgi_dir: /usr/local/var/www/

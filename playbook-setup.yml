@@ -1,6 +1,7 @@
 ---
 - hosts: mother-host
   roles:
+    - name: afakeman.service.cgi
     - name: afakeman.service.nginx
     - name: afakeman.utility.nginx-server
       vars:

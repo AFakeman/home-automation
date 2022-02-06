@@ -1,0 +1,5 @@
+---
+- name: reload cgi service
+  launchd:
+    state: reloaded
+    name: afakeman.cgi

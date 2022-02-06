@@ -1,0 +1,20 @@
+---
+
+- name: CGI | Ensure python3 install
+  homebrew:
+    name:
+      - python3
+
+- name: CGI | Ensure LaunchAgent
+  template:
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/afakeman.cgi.plist"
+    src: afakeman.cgi.plist.j2
+    owner: "{{ ansible_user }}"
+    group: admin
+    mode: 0644
+  notify: reload cgi service
+
+- name: CGI Ensure CGI is started
+  launchd:
+    state: started
+    name: afakeman.cgi
