@@ -1,0 +1,21 @@
+---
+- name: Git | Ensure cgit install
+  homebrew:
+    name:
+      - cgit
+
+- name: Git | Ensure cgit config
+  template:
+    src: cgitrc.j2
+    dest: /usr/local/etc/cgitrc
+    mode: 0644
+    owner: "{{ ansible_user }}"
+    group: admin
+
+- name: Git | Ensure cgit script
+  copy:
+    src: git.sh
+    dest: /usr/local/var/www/cgi-bin/
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: admin

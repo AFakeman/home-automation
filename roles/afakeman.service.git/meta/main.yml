@@ -1,0 +1,21 @@
+dependencies:
+  - name: afakeman.utility.nginx-server
+    vars:
+      server_name: git
+      subdomain: "{{ git_subdomain_idn }}"
+      snippet: |
+        location ~ ^/(?<repo_name>[^/]+).git(?<path>|/.*)$ {
+            alias "/Users/anton/git/$repo_name$path";
+        }
+
+        location / {
+            proxy_pass http://127.0.0.1:8533/cgi-bin/git.sh$uri$is_args$args;
+        }
+
+        location = /cgit.css {
+            root /usr/local/var/www/htdocs/cgit/;
+        }
+
+        location = /cgit.png {
+            root /usr/local/var/www/htdocs/cgit/;
+        }

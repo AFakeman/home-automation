@@ -1,0 +1,8 @@
+---
+git_repo_root: "/Users/{{ ansible_user }}/git"
+
+git_repo_list:
+  - name: blog
+    desc: Мой блог (https://блог.афакеман.рф)
+
+git_subdomain: "гит"
