@@ -32,12 +32,12 @@
         subdomain: "{{ 'мюсдл'.encode('idna').decode('ascii') }}"
         proxy_target: 127.0.0.1:8533/cgi-bin/download.sh?$uri
 
-
     - name: afakeman.utility.nginx-server
       vars:
         server_name: torrents
         subdomain: "{{ 'торренты'.encode('idna').decode('ascii') }}"
         proxy_target: localhost:9091
+
 
 - hosts: mother-host
   roles:
