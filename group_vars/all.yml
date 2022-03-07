@@ -3,6 +3,8 @@ domain: 'афакеман.рф'
 # This one will break when master is Python 2.
 domain_idn: "{{ domain.encode('idna').decode('ascii') }}"
 
+alt_domain: 'afakeman.com'
+
 tunnel_private_key: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           35346262343131346265313565363737393633373531666565323733346430643864633031353138

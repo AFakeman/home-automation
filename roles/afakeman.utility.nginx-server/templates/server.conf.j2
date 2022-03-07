@@ -18,3 +18,26 @@ server {
 
     {{ snippet | indent(4) }}
 }
+
+{% if alt_subdomain %}
+server {
+    listen 443 ssl;
+    server_name "{{ alt_subdomain }}.*";
+
+    ssl_certificate /etc/letsencrypt/live/{{ alt_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ alt_domain }}/privkey.pem;
+
+    include include/ssl.conf;
+    include include/hsts.conf;
+
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $http_connection;
+    proxy_set_header x-real-ip $remote_addr;
+    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+    proxy_set_header x-forwarded-proto $scheme;
+    proxy_set_header x-forwarded-host $http_host;
+
+    {{ snippet | indent(4) }}
+}
+{% endif %}
