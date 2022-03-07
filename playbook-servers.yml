@@ -1,0 +1,79 @@
+---
+- hosts: mother-host
+  roles:
+    - name: afakeman.service.cgi
+    - name: afakeman.service.nginx
+    - name: afakeman.utility.nginx-server
+      vars:
+        proxy_target: localhost:8000
+        server_name: bitwarden
+        subdomain: "{{ 'пароли'.encode('idna').decode('ascii') }}"
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        proxy_target: localhost:8080
+        server_name: code
+        subdomain: "{{ 'код'.encode('idna').decode('ascii') }}"
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        proxy_target: localhost:8096
+        server_name: content
+        subdomain: "{{ 'контент'.encode('idna').decode('ascii') }}"
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        proxy_target: localhost:8581
+        server_name: homebridge
+        subdomain: "{{ 'умныйдом'.encode('idna').decode('ascii') }}"
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        server_name: musdl
+        subdomain: "{{ 'мюсдл'.encode('idna').decode('ascii') }}"
+        proxy_target: 127.0.0.1:8533/cgi-bin/download.sh?$uri
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        server_name: torrents
+        subdomain: "{{ 'торренты'.encode('idna').decode('ascii') }}"
+        proxy_target: localhost:9091
+
+
+- hosts: mother-host
+  roles:
+    - name: afakeman.utility.nginx-server
+      vars:
+        server_name: pac
+        subdomain: "{{ 'pac'.encode('idna').decode('ascii') }}"
+        snippet: |
+          root /usr/local/var/www/pac/;
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        server_name: muml
+        subdomain: "{{ 'мумль'.encode('idna').decode('ascii') }}"
+        snippet: |
+          root /usr/local/var/www/muml/;
+
+    - name: afakeman.utility.nginx-server
+      vars:
+        server_name: fooraa
+        subdomain: "{{ 'фура'.encode('idna').decode('ascii') }}"
+        snippet: |
+          location / {
+              proxy_pass http://localhost:8361/;
+          }
+
+          location /newquote/ {
+              limit_except GET {
+                  allow 192.168.1.0/24;
+                  deny all;
+              }
+              proxy_pass http://localhost:8361$uri;
+          }
+
+          location /robots.txt {
+              root /usr/local/var/www/;
+          }
+
