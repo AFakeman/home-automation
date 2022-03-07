@@ -1,0 +1,4 @@
+---
+- hosts: mother-host
+  roles:
+    - name: afakeman.service.blog

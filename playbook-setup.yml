@@ -1,4 +1,5 @@
 ---
 - import_playbook: playbook-servers.yml
+- import_playbook: playbook-blog.yml
 - import_playbook: playbook-git.yml
 - import_playbook: playbook-vpn.yml

@@ -1,0 +1,8 @@
+dependencies:
+  - name: afakeman.utility.nginx-server
+    vars:
+      server_name: blog
+      subdomain: "{{ 'блог'.encode('idna').decode('ascii') }}"
+      alt_subdomain: blog
+      snippet: |
+        root /usr/local/var/www/blog/;
