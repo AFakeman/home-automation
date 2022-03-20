@@ -19,7 +19,7 @@
     dest: "{{ wireguard_config_folder }}"
     mode: 0744
     owner: root
-    groups: admin
+    group: admin
   loop:
     - postup.sh
     - postdown.sh
@@ -32,7 +32,7 @@
     dest: "{{ wireguard_config_file }}"
     mode: 0644
     owner: root
-    groups: admin
+    group: admin
   notify:
     - reload tunnel
 
@@ -42,6 +42,6 @@
     dest: "{{ wireguard_launchctl_config }}"
     mode: 0644
     owner: root
-    groups: admin
+    group: admin
   notify:
     - reload tunnel

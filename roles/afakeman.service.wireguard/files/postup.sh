@@ -18,11 +18,11 @@ chmod 700 /usr/local/var/run/wireguard
 RULES="nat on en1 from $NETWORK to any -> (en1)"
 
 # If there are more arguments than the first two, it means that
-# MITM srcport:destport pairs were passedk=
+# MITM srcport:destport:proto tuples were passed. Proto defaults to tcp.
 while [ "$#" -gt 0 ]; do
     PAIR=$1
-    IFS=: read SRC DST <<< "$PAIR"
-    RULES=$(printf "%s\n%s" "$RULES" "rdr pass proto tcp from $NETWORK to any port $SRC -> 127.0.0.1 port $DST")
+    IFS=: read SRC DST PROTO <<< "$PAIR"
+    RULES=$(printf "%s\n%s" "$RULES" "rdr pass proto ${PROTO:-tcp} from $NETWORK to any port $SRC -> 127.0.0.1 port $DST")
     shift;
 done
 
