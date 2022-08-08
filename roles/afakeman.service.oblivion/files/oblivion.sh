@@ -26,7 +26,7 @@ echo "<title>$title</title>"
 echo "</head>"
 echo "<body>"
 if [ -z "$raw_line" ]; then
-    echo "<h1>Я ваще не ебу о чем ты</h1>"
+    echo "<h1>404</h1>"
     echo "<a href=\"/\">еще</h1>"
 else
     line=`echo "$raw_line" | cut -d'@' -f2`
