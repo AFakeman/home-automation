@@ -13,3 +13,11 @@
     mode: 0755
     owner: "{{ ansible_user }}"
     group: admin
+
+- name: Oblivion | Ensure oblivion tts script
+  copy:
+    src: oblivion_tts.sh
+    dest: /usr/local/var/www/cgi-bin/
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: admin

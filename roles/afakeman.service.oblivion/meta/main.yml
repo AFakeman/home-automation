@@ -7,3 +7,7 @@ dependencies:
         location / {
             proxy_pass http://127.0.0.1:8533/cgi-bin/oblivion.sh$uri$is_args$args;
         }
+
+        location ~ ^/voice/(.*)\.wav {
+            proxy_pass http://127.0.0.1:8533/cgi-bin/oblivion_tts.sh/$1$is_args$args;
+        }

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 set -eauo pipefail
 
 title="Даванем подливы"
@@ -31,6 +30,10 @@ if [ -z "$raw_line" ]; then
 else
     line=`echo "$raw_line" | cut -d'@' -f2`
     echo "<h1>$line</h1>"
+    if [ -n "$QUERY_STRING" ]; then
+        echo "<audio preload=\"none\" controls src=\"/voice/$dialogueid.wav\"></audio>"
+        echo "<br>"
+    fi
     echo "<a href=\"$dialogueid\">пермалинк</h1>"
     echo "<br>"
     echo "<a href=\"/\">еще</h1>"
