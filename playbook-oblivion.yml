@@ -1,0 +1,5 @@
+---
+- hosts: mother-host
+  become: true
+  roles:
+    - role: afakeman.service.oblivion

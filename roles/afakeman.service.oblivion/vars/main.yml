@@ -1,0 +1,3 @@
+---
+
+oblivion_subdomain_idn: "{{ oblivion_subdomain.encode('idna').decode('ascii') }}"

@@ -1,0 +1,15 @@
+- name: Oblivion | Ensure dialogue file
+  copy:
+    src: oblivion_dialogue.txt
+    dest: /usr/local/var/www/cgi-bin/
+    mode: 0644
+    owner: "{{ ansible_user }}"
+    group: admin
+
+- name: Oblivion | Ensure oblivion script
+  copy:
+    src: oblivion.sh
+    dest: /usr/local/var/www/cgi-bin/
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: admin
