@@ -33,10 +33,14 @@ else
     if [ -n "$QUERY_STRING" ]; then
         echo "<audio preload=\"none\" controls src=\"/voice/$dialogueid.wav\"></audio>"
         echo "<br>"
+        echo "<a href=\"$dialogueid?$QUERY_STRING\">пермалинк</h1>"
+        echo "<br>"
+        echo "<a href=\"/?$QUERY_STRING\">еще</h1>"
+    else
+        echo "<a href=\"$dialogueid\">пермалинк</h1>"
+        echo "<br>"
+        echo "<a href=\"/\">еще</h1>"
     fi
-    echo "<a href=\"$dialogueid\">пермалинк</h1>"
-    echo "<br>"
-    echo "<a href=\"/\">еще</h1>"
 fi
 echo "</body>"
 echo "</html>"
