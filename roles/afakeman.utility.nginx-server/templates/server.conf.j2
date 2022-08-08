@@ -19,7 +19,7 @@ server {
     {{ snippet | indent(4) }}
 }
 
-{% if alt_subdomain %}
+{% if alt_subdomain | default('') %}
 server {
     listen 443 ssl;
     server_name "{{ alt_subdomain }}.*";
