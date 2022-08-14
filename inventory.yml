@@ -16,3 +16,7 @@ vpn:
 mitm:
   hosts:
     mac-mini:
+
+git:
+  hosts:
+    mac-mini:

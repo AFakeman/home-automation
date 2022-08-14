@@ -5,15 +5,6 @@ domain_idn: "{{ domain.encode('idna').decode('ascii') }}"
 
 alt_domain: 'afakeman.com'
 
-tunnel_private_key: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          35346262343131346265313565363737393633373531666565323733346430643864633031353138
-          6665613061383530643364353661643864613637303664660a336334356337663330346331333334
-          38323434613861353631623661623430303165363862326534373938363234623333373533343836
-          3334396134623038330a376633643536323462323865373931623763336463313561623038393165
-          36316164393831356366323665376432356230613463306238656131613762623961336461623737
-          6563303031373961373264666439386236623562633431633930
-
 tunnel_ip_address:
   vpn: 192.168.65.1/24
   mitm: 192.168.64.1/24
@@ -43,49 +34,3 @@ tunnel_peers:
       address: 192.168.64.4/32
     - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
       address: 192.168.64.5/32
-
-borgmatic_keyphrase: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          33313133383731613232393034633664366561353730313063653939616463373464646337313836
-          3134326136663366626166396635613530366630353637360a366461363034393566633664393865
-          64306238623566386464366138616636363437326165383535306166666436363532353838306333
-          3037373462363437390a363236366438633734653565666135646362636464663762323937633934
-          63303162393334343261303435646166633964333764646334666537633738323739386434366162
-          62646265333137663064633636323366313639373733636662323130366161653864386531363662
-          61623963313939636536323662623036396630356132336232633639386434643063633361386331
-          31366162636436326338
-
-borgmatic_directories:
-  - /Users/{{ ansible_user }}/git/
-
-borgmatic_repositories:
-  - zh1293@zh1293.rsync.net:mother-host
-
-borgmatic_retention:
-  keep_daily: 7
-  keep_weekly: 4
-  keep_monthly: 3
-
-git_repo_list:
-  - name: blog
-    desc: Мой блог (https://блог.афакеман.рф)
-    section: public
-    hooks:
-      post-receive: "{{ lookup('file', 'blog/post-receive') }}"
-
-  - name: home-automation
-    desc: Скрипты для деплоя датацентра
-    section: public
-
-  - name: dotfiles
-    desc: Мои дотфайлы
-    section: private
-
-  - name: oblivion
-    desc: "Скрипты для ковыряния файлов TES IV: Oblivion"
-    section: private
-
-  - name: kubernetes
-    desc: Production-Grade Container Scheduling and Management
-    section: mirror
-    upstream: git@github.com:kubernetes/kubernetes.git
