@@ -82,18 +82,4 @@ readme=:install.txt
 readme=:INSTALL
 readme=:install
 
-##
-## List of repositories.
-## PS: Any repositories listed when section is unset will not be
-##     displayed under a section heading
-## PPS: This list could be kept in a different file (e.g. '/etc/cgitrepos')
-##      and included like this:
-##        include=/etc/cgitrepos
-##
-{% for repo in git_repo_list %}
-
-repo.url={{ repo.name }}
-repo.path={{ git_repo_root }}/{{ repo.name }}
-repo.desc={{ repo.desc }}
-repo.owner={{ repo.owner | default('afakeman') }}
-{% endfor %}
+include=/usr/local/etc/cgit.d/repolist-$MODE.conf

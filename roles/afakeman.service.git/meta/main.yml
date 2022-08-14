@@ -3,12 +3,15 @@ dependencies:
     vars:
       server_name: git
       subdomain: "{{ git_subdomain_idn }}"
+      alt_subdomain: "git"
       snippet: |
+
         location ~ ^/(?<repo_name>[^/]+).git(?<path>|/.*)$ {
             alias "/Users/anton/git/$repo_name$path";
         }
 
         location / {
+            proxy_set_header user-agent $is_remote;
             proxy_pass http://127.0.0.1:8533/cgi-bin/git.sh$uri$is_args$args;
         }
 

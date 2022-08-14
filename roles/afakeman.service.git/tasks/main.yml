@@ -12,6 +12,29 @@
     owner: "{{ ansible_user }}"
     group: admin
 
+- name: Git | Ensure cgit conf.d folder
+  file:
+    path: /usr/local/etc/cgit.d/
+    state: directory
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: admin
+
+- name: Git | Ensure private/public repo lists
+  template:
+    src: repolist.j2
+    dest: /usr/local/etc/cgit.d/repolist-{{ mode }}.conf
+    mode: 0644
+    owner: "{{ ansible_user }}"
+    group: admin
+  loop:
+    - public
+    - all
+  loop_control:
+    loop_var: mode
+  tags:
+    - git_repo
+
 - name: Git | Ensure cgit script
   copy:
     src: git.sh
@@ -27,5 +50,8 @@
   vars:
     repo_name: "{{ repo.name }}"
     repo_hooks: "{{ repo.hooks | default({}) }}"
+    repo_upstream: "{{ repo.upstream | default({}) }}"
   loop_control:
     loop_var: repo
+  tags:
+    - git_repo

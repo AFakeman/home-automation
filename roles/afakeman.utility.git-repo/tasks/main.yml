@@ -1,12 +1,17 @@
 ---
-- name: Git | Ensure repository exists
+- name: Git | {{ repo_name }} | Check if directory exists
+  stat:
+    path: "{{ repo_base_path }}/{{ repo_name }}"
+  register: _repo_stat
+
+- name: Git | {{ repo_name }} | Ensure repository exists
   file:
     state: directory
     owner: "{{ ansible_user }}"
     mode: 0755
     dest: "{{ repo_base_path }}/{{ repo_name }}"
 
-- name: Git | Check if repository exists and is bare
+- name: Git | {{ repo_name }} | Check if repository exists and is bare
   command:
     cmd: git rev-parse --is-bare-repository
     chdir: "{{ repo_base_path }}/{{ repo_name }}"
@@ -16,30 +21,33 @@
     - _git_state.rc != 0
     - "_git_state.stderr != 'fatal: not a git repository (or any of the parent directories): .git'"
   register: _git_state
+  when: _repo_stat.stat.exists
 
-- name: Git | Fail if repository exists but not bare
+- name: Git | {{ repo_name }} | Fail if repository exists but not bare
   assert:
-    that: _git_state.stdout != "false"
+    that: (not _repo_stat.stat.exists) or (_git_state.stdout != "false")
     msg: "Repository {{ repo_base_path }}/{{ repo_name }} exists and is not bare"
 
-- name: Git | Ensure repository
-  when: "_git_state.rc != 0"
+- name: Git | {{ repo_name }} | Ensure repository
+  when: "(not _repo_stat.stat.exists) or _git_state.rc != 0"
   block:
-    - name: Git | Ensure server repository
+    - name: Git | {{ repo_name }} | Ensure server repository
       git:
         repo: "{{ repo_upstream }}"
         dest: "{{ repo_base_path }}/{{ repo_name }}"
+        remote: upstream
         bare: true
         update: false
-      when: "repo_upstream is defined"
+        accept_hostkey: yes
+      when: "repo_upstream"
 
-    - name: Git | Ensure bare repository
+    - name: Git | {{ repo_name }} | Ensure bare repository
       command:
         cmd: git init {{ repo_name }} --bare
         chdir: "{{ repo_base_path }}"
-      when: "repo_upstream is not defined"
+      when: "not repo_upstream"
 
-- name: Git | Ensure post-update hook to work with dumb HTTP protocol
+- name: Git | {{ repo_name }} | Ensure post-update hook to work with dumb HTTP protocol
   copy:
     dest: "{{ repo_base_path }}/{{ repo_name }}/hooks/post-update"
     content: |
@@ -50,7 +58,7 @@
     group: admin
     mode: 0755
 
-- name: Git | Ensure hooks
+- name: Git | {{ repo_name }} | Ensure hooks
   copy:
     dest: "{{ repo_base_path }}/{{ repo_name }}/hooks/{{ item.key }}"
     content: "{{ item.value }}\n"

@@ -1,0 +1,11 @@
+{% for repo in git_repo_list | sort(attribute='section') %}
+{% if repo.section != 'private' or repo.section == 'private' and mode == 'all' %}
+section={{ repo.section }}
+
+repo.url={{ repo.name }}
+repo.path={{ git_repo_root }}/{{ repo.name }}
+repo.desc={{ repo.desc }}
+repo.owner={{ repo.owner | default('afakeman') }}
+
+{% endif %}
+{% endfor %}

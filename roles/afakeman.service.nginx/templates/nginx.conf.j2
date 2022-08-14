@@ -15,6 +15,11 @@ http {
 
     gzip  on;
 
+    geo $is_remote {
+        default      "remote";
+        192.168.65.0/24 "local";
+    }
+
     server {
         listen       80;
         server_name  localhost;
