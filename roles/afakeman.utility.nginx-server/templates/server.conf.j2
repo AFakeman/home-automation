@@ -2,6 +2,9 @@ server {
     listen 443 ssl;
     server_name "{{ subdomain }}.*";
 
+    access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
+    error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
+
     ssl_certificate /etc/letsencrypt/live/{{ domain_idn }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{ domain_idn }}/privkey.pem;
 
@@ -23,6 +26,9 @@ server {
 server {
     listen 443 ssl;
     server_name "{{ alt_subdomain }}.*";
+
+    access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
+    error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
 
     ssl_certificate /etc/letsencrypt/live/{{ alt_domain }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{ alt_domain }}/privkey.pem;
