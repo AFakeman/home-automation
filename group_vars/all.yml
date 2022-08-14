@@ -32,6 +32,8 @@ tunnel_peers:
       address: 192.168.65.4/32
     - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
       address: 192.168.65.5/32
+    - key: Oa1Mo+L6sFlAVd5++sMYbDq4BU2A3+75A7YOsjNFZQ4=
+      address: 192.168.65.6/32
   mitm:
     - key: 1RbBS+6YmYPMztyH0SwTMIS35jE0KdYVdE0i87TUHlc=
       address: 192.168.64.2/32
@@ -67,8 +69,23 @@ borgmatic_retention:
 git_repo_list:
   - name: blog
     desc: Мой блог (https://блог.афакеман.рф)
+    section: public
     hooks:
       post-receive: "{{ lookup('file', 'blog/post-receive') }}"
 
   - name: home-automation
     desc: Скрипты для деплоя датацентра
+    section: public
+
+  - name: dotfiles
+    desc: Мои дотфайлы
+    section: private
+
+  - name: oblivion
+    desc: "Скрипты для ковыряния файлов TES IV: Oblivion"
+    section: private
+
+  - name: kubernetes
+    desc: Production-Grade Container Scheduling and Management
+    section: mirror
+    upstream: git@github.com:kubernetes/kubernetes.git
