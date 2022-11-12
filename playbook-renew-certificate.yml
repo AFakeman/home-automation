@@ -1,0 +1,265 @@
+---
+
+- hosts: localhost
+  connection: local
+  vars:
+    region: "eu-west-1"
+    availability_zone: "eu-west-1b"
+    object_prefix: "certificate-refresh"
+    vpc_name: "{{ object_prefix }}"
+    security_group_name: "{{ object_prefix }}"
+    instance_name: "{{ object_prefix }}"
+    key_name: "{{ object_prefix }}"
+    image_id: "ami-07e1daca3ee9095b3"  # aarch64 AWS Linux 2 for eu-west-1
+    instance_type: "a1.medium"
+
+  tasks:
+    - name: Create AWS EC2 VPC
+      amazon.aws.ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: 10.10.0.0/24
+        region: "{{ region }}"
+      register: _vpc
+
+    - name: Lookup AWS EC2 VPC Routing table
+      ec2_vpc_route_table_info:
+        region: "{{ region }}"
+        filters:
+          vpc-id: "{{ _vpc.vpc.id }}"
+      register: _route_tables
+
+    - name: Create AWC EC2 VPC Internet gateway
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ _vpc.vpc.id }}"
+        region: "{{ region }}"
+        state: present
+      register: _igw
+
+    - name: Create AWS EC2 VPC Routing table
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ _vpc.vpc.id }}"
+        region: "{{ region }}"
+        lookup: id
+        route_table_id: "{{ _route_tables.route_tables[0].id }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ _igw.gateway_id }}"
+
+    - name: Create AWS EC2 VPS subnet
+      amazon.aws.ec2_vpc_subnet:
+        state: present
+        az: "{{ availability_zone }}"
+        vpc_id: "{{ _vpc.vpc.id }}"
+        cidr: 10.10.0.0/25
+      register: _vpc_subnet
+
+    - name: Create AWS EC2 Security group
+      amazon.aws.ec2_group:
+        name: "{{ security_group_name }}"
+        region: "{{ region }}"
+        description: "public ssh access"
+        vpc_id: "{{ _vpc.vpc.id }}"
+        rules:
+        - proto: tcp
+          ports:
+          - 22
+          cidr_ip: 0.0.0.0/0
+          rule_desc: allow all on port 80
+
+    - name: Delete AWS EC2 keypair
+      amazon.aws.ec2_key:
+        name: "{{ key_name }}"
+        state: absent
+
+    - name: Create AWS EC2 keypair
+      amazon.aws.ec2_key:
+        name: "{{ key_name }}"
+      register: _key
+
+    - name: Setup a private key in a tmp dir
+      copy:
+        dest: "/tmp/{{ key_name }}.key"
+        content: "{{ _key.key.private_key }}"
+        mode: 0600
+
+    - name: Create AWS EC2 instance and ensure it's running
+      amazon.aws.ec2_instance:
+        name: "{{ instance_name }}"
+        region: "{{ region }}"
+        image_id: "{{ image_id }}"
+        vpc_subnet_id: "{{ _vpc_subnet.subnet.id }}"
+        instance_type: "{{ instance_type }}"
+        key_name: "{{ key_name }}"
+        security_group: "{{ security_group_name }}"
+        network:
+          assign_public_ip: true
+      register: _instance
+      until: _instance.instances[0].state.name == 'running'
+      retries: 60
+
+    - name: Print AWS EC2 instance IP address
+      debug:
+        msg: "{{ _instance.instances[0].public_ip_address }}"
+
+    - name: Add EC2 instance as an Ansible host
+      add_host:
+        name: "{{ _instance.instances[0].instance_id }}"
+        ansible_ssh_host: "{{ _instance.instances[0].public_ip_address }}"
+        ansible_ssh_private_key_file: "/tmp/{{ key_name }}.key"
+        ansible_ssh_user: ec2-user
+        groups: certificate-refresh
+
+    - name: Wait for the host to start accepting SSH connections
+      wait_for:
+        host: "{{ _instance.instances[0].public_ip_address }}"
+        port: 22
+
+- hosts: certificate-refresh
+  gather_facts: true
+  become: true
+  tasks:
+    - command:
+        argv:
+          - amazon-linux-extras
+          - install
+          - epel
+          - -y
+
+    - yum:
+        name:
+          - certbot
+          - certbot-dns-cloudflare
+        state: present
+
+    - copy:
+        dest: /tmp/cloudflare.ini
+        content: |
+          dns_cloudflare_email = {{ cloudflare_email }}
+          dns_cloudflare_api_key = {{ cloudflare_api_key }}
+
+    - command:
+        argv:
+          - certbot
+          - certonly
+          - --dns-cloudflare
+          - --dns-cloudflare-credentials
+          - /tmp/cloudflare.ini
+          - -d
+          - "*.{{ item }}"
+          - -m
+          - "{{ cloudflare_email }}"
+          - --agree-tos
+          - --non-interactive
+      loop:
+        - "{{ alt_domain }}"
+        - "{{ domain_idn }}"
+
+    - slurp:
+        src: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+      register: _certs
+      loop:
+        - "{{ alt_domain }}"
+        - "{{ domain_idn }}"
+
+    - slurp:
+        src: /etc/letsencrypt/live/{{ item }}/privkey.pem
+      register: _keys
+      loop:
+        - "{{ alt_domain }}"
+        - "{{ domain_idn }}"
+
+    - name: Add the cert to the _le_keys variable
+      set_fact:
+        _le_certs: "{{ _le_certs | default({}) | combine({item.item: item.content | b64decode}) }}"
+      loop: "{{ _certs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Add the key to the _le_keys variable
+      set_fact:
+        _le_keys: "{{ _le_keys | default({}) | combine({item.item: item.content | b64decode}) }}"
+      loop: "{{ _keys.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+- hosts: mother-host
+  become: true
+  tasks:
+    - name: Copy certificate bundles to the let's encrypt directory
+      copy:
+        dest: /etc/letsencrypt/live/{{ item.key }}/fullchain.pem
+        content: "{{ item.value }}"
+        mode: 0600
+      loop: "{{ hostvars[groups['certificate-refresh'][0]]._le_certs | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Copy private keys to the let's encrypt directory
+      copy:
+        dest: /etc/letsencrypt/live/{{ item.key }}/privkey.pem
+        content: "{{ item.value }}"
+        mode: 0600
+      loop: "{{ hostvars[groups['certificate-refresh'][0]]._le_keys | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Include the nginx role to reload nginx
+      include_role:
+        name: afakeman.service.nginx
+        tasks_from: reload_nginx.yml
+
+- hosts: localhost
+  connection: local
+  vars:
+    region: "eu-west-1"
+    availability_zone: "eu-west-1b"
+    object_prefix: "certificate-refresh"
+    vpc_name: "{{ object_prefix }}"
+    security_group_name: "{{ object_prefix }}"
+    instance_name: "{{ object_prefix }}"
+    key_name: "{{ object_prefix }}"
+    image_id: "ami-07e1daca3ee9095b3"  # aarch64 AWS Linux 2 for eu-west-1
+    instance_type: "a1.medium"
+  tasks:
+    - name: Terminate AWS EC2 instance
+      amazon.aws.ec2_instance:
+        name: "{{ instance_name }}"
+        region: "{{ region }}"
+        vpc_subnet_id: "{{ _vpc_subnet.subnet.id }}"
+        state: terminated
+
+    - name: Delete AWS EC2 Security group
+      amazon.aws.ec2_group:
+        name: "{{ security_group_name }}"
+        region: "{{ region }}"
+        state: absent
+
+    - name: Delete AWS EC2 VPS subnet
+      amazon.aws.ec2_vpc_subnet:
+        az: "{{ availability_zone }}"
+        vpc_id: "{{ _vpc.vpc.id }}"
+        cidr: 10.10.0.0/25
+        state: absent
+
+    - name: Delete AWC EC2 VPC Internet gateway
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ _vpc.vpc.id }}"
+        region: "{{ region }}"
+        state: absent
+
+    - name: Delete AWS EC2 VPC
+      amazon.aws.ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        region: "{{ region }}"
+        cidr_block: 10.10.0.0/24
+        state: absent
+
+    - name: Delete AWS EC2 keypair
+      amazon.aws.ec2_key:
+        name: "{{ key_name }}"
+        state: absent
+
+    - name: Delete private key
+      file:
+        path: "/tmp/{{ key_name }}.key"
+        state: absent
