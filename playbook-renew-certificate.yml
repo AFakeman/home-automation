@@ -1,5 +1,8 @@
 ---
 
+- hosts: mother-host
+  become: true
+
 - hosts: localhost
   connection: local
   vars:
@@ -113,10 +116,14 @@
       wait_for:
         host: "{{ _instance.instances[0].public_ip_address }}"
         port: 22
+      tags:
+        - refresh
 
 - hosts: certificate-refresh
   gather_facts: true
   become: true
+  tags:
+    - refresh
   tasks:
     - command:
         argv:
@@ -184,6 +191,8 @@
 
 - hosts: mother-host
   become: true
+  tags:
+    - refresh
   tasks:
     - name: Copy certificate bundles to the let's encrypt directory
       copy:
