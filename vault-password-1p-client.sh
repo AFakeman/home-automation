@@ -5,5 +5,5 @@ if ! command -v op &> /dev/null; then
     read -s password
     echo $password
 else
-    op get item "Ansible Vault for Home DC" | jq .details.password -rj
+    op item get "Ansible Vault for Home DC" --format json | jq -r '.fields[]|select(.id=="password").value'
 fi
