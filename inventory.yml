@@ -1,9 +1,11 @@
 ---
+
 home:
   hosts:
     mac-mini:
-      ansible_host: 192.168.65.1
+      ansible_host: 192.168.88.46
       ansible_user: anton
+      ansible_python_interpreter: /opt/local/bin/python3.12
 
 mother-host:
   hosts:
