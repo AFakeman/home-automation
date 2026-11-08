@@ -1,12 +1,9 @@
 server {
-    listen 443 ssl;
+    listen 8080;
     server_name "{{ subdomain }}.*";
 
     access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
     error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
-
-    ssl_certificate /etc/letsencrypt/live/{{ domain_idn }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ domain_idn }}/privkey.pem;
 
     include include/ssl.conf;
     include include/hsts.conf;
@@ -24,14 +21,11 @@ server {
 
 {% if alt_subdomain | default('') %}
 server {
-    listen 443 ssl;
+    listen 8080;
     server_name "{{ alt_subdomain }}.*";
 
     access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
     error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
-
-    ssl_certificate /etc/letsencrypt/live/{{ alt_domain }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ alt_domain }}/privkey.pem;
 
     include include/ssl.conf;
     include include/hsts.conf;
