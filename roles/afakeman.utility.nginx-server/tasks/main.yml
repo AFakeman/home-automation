@@ -1,19 +1,44 @@
+---
 - name: Check if variables are set
-  assert:
+  ansible.builtin.assert:
     that:
       - server_name is defined
       - subdomain is defined
       - domain is defined
     quiet: true
 
+- name: Ensure virtual-host configuration and log directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
+  loop:
+    - "{{ nginx_config_dir }}/conf.d"
+    - "{{ nginx_log_dir }}"
+
 - name: Copy the template to the nginx directory
-  template:
-    src: "server.conf.j2"
-    dest: "/usr/local/etc/nginx/conf.d/{{ server_name }}.conf"
-  notify: reload nginx
+  become: true
+  ansible.builtin.template:
+    src: server.conf.j2
+    dest: "{{ nginx_config_dir }}/conf.d/{{ server_name }}.conf"
+    owner: root
+    group: wheel
+    mode: '0644'
+  notify: Reload nginx virtual hosts
   register: _nginx
 
 - name: Check nginx configuration
-  command: /usr/local/bin/nginx -T
   become: true
-  when: _nginx.changed
+  ansible.builtin.command:
+    argv:
+      - "{{ nginx_binary }}"
+      - -t
+      - -c
+      - "{{ nginx_config_dir }}/nginx.conf"
+  changed_when: false
+  when:
+    - _nginx.changed
+    - not ansible_check_mode

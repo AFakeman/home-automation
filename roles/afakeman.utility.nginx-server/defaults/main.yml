@@ -1,3 +1,9 @@
+---
+nginx_config_dir: /opt/local/etc/nginx
+nginx_log_dir: /opt/local/var/log/nginx
+nginx_binary: /opt/local/sbin/nginx
+nginx_launchd_service: org.macports.nginx
+
 snippet: |
   location / {
   {% if proxy_target.split(':')[0].startswith('http') %}

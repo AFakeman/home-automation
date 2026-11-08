@@ -2,11 +2,8 @@ server {
     listen 8080;
     server_name "{{ subdomain }}.*";
 
-    access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
-    error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
-
-    include include/ssl.conf;
-    include include/hsts.conf;
+    access_log {{ nginx_log_dir }}/{{ server_name }}.access.log;
+    error_log  {{ nginx_log_dir }}/{{ server_name }}.error.log;
 
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
@@ -24,11 +21,8 @@ server {
     listen 8080;
     server_name "{{ alt_subdomain }}.*";
 
-    access_log /usr/local/var/log/nginx/{{ server_name }}.access.log;
-    error_log  /usr/local/var/log/nginx/{{ server_name }}.access.log;
-
-    include include/ssl.conf;
-    include include/hsts.conf;
+    access_log {{ nginx_log_dir }}/{{ server_name }}.access.log;
+    error_log  {{ nginx_log_dir }}/{{ server_name }}.error.log;
 
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
