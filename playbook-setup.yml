@@ -1,3 +1,4 @@
 ---
+- import_playbook: playbook-cloudflared.yml
 - import_playbook: playbook-nginx.yml
 - import_playbook: playbook-oblivion.yml
