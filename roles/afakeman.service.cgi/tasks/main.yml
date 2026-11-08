@@ -1,13 +1,68 @@
 ---
-- name: Configure the CGI LaunchDaemon
+- name: Configure the CGI user LaunchAgent
   become: true
   environment:
     PATH: /opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
   block:
-    - name: Require macOS
+    - name: Require macOS and a non-root SSH user
       ansible.builtin.assert:
-        that: ansible_facts['system'] == 'Darwin'
-        fail_msg: This role requires macOS with MacPorts installed.
+        that:
+          - ansible_facts['system'] == 'Darwin'
+          - ansible_user is defined
+          - cgi_user | length > 0
+          - cgi_user != 'root'
+        fail_msg: Set ansible_user to a non-root macOS user with an active GUI login.
+
+    - name: Resolve the CGI user UID
+      ansible.builtin.command:
+        argv: [/usr/bin/id, -u, "{{ cgi_user }}"]
+      register: cgi_user_id
+      changed_when: false
+      check_mode: false
+
+    - name: Resolve the CGI user primary group
+      ansible.builtin.command:
+        argv: [/usr/bin/id, -gn, "{{ cgi_user }}"]
+      register: cgi_user_group
+      changed_when: false
+      check_mode: false
+
+    - name: Resolve the CGI user home directory
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/dscl
+          - /Search
+          - -read
+          - "/Users/{{ cgi_user }}"
+          - NFSHomeDirectory
+      register: cgi_user_home_record
+      changed_when: false
+      check_mode: false
+
+    - name: Set the CGI home directory and GUI domain
+      ansible.builtin.set_fact:
+        cgi_user_home: "{{ cgi_user_home_record.stdout | regex_replace('^NFSHomeDirectory: *', '') | trim }}"
+        cgi_launchd_domain: "gui/{{ cgi_user_id.stdout | trim }}"
+
+    - name: Validate the resolved CGI home directory
+      ansible.builtin.assert:
+        that: cgi_user_home.startswith('/')
+        fail_msg: Could not resolve the CGI user's home directory.
+
+    - name: Check for the CGI user's active GUI session
+      ansible.builtin.command:
+        argv: [/bin/launchctl, print, "{{ cgi_launchd_domain }}"]
+      register: cgi_gui_session
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Require an active GUI login for CGI
+      ansible.builtin.assert:
+        that: cgi_gui_session.rc == 0
+        fail_msg: >-
+          {{ cgi_user }} must be logged into the macOS desktop. The CGI LaunchAgent
+          needs that GUI session for speech synthesis; an SSH login is not enough.
 
     - name: Check for MacPorts
       ansible.builtin.stat:
@@ -40,30 +95,35 @@
         path: "{{ cgi_log_file }}"
         state: touch
         owner: "{{ cgi_user }}"
-        group: wheel
+        group: "{{ cgi_user_group.stdout | trim }}"
         mode: '0640'
         access_time: preserve
         modification_time: preserve
       notify: Reload CGI
 
-    - name: Install CGI LaunchDaemon
+    - name: Create the user's LaunchAgents directory
+      ansible.builtin.file:
+        path: "{{ cgi_plist_path | dirname }}"
+        state: directory
+        owner: "{{ cgi_user }}"
+        group: "{{ cgi_user_group.stdout | trim }}"
+        mode: '0755'
+
+    - name: Install CGI LaunchAgent
       ansible.builtin.template:
         src: afakeman.cgi.plist.j2
         dest: "{{ cgi_plist_path }}"
-        owner: root
-        group: wheel
+        owner: "{{ cgi_user }}"
+        group: "{{ cgi_user_group.stdout | trim }}"
         mode: '0644'
         validate: /usr/bin/plutil -lint %s
       notify: Reload CGI
 
-    - name: Enable and start CGI LaunchDaemon
-      community.general.launchd:
-        name: "{{ cgi_launchd_service }}"
-        enabled: true
-        state: started
-
     - name: Apply pending service changes before checking CGI
       ansible.builtin.meta: flush_handlers
+
+    - name: Ensure the CGI agent is enabled and running
+      ansible.builtin.include_tasks: ensure_running.yml
 
     - name: Verify CGI is listening on localhost
       ansible.builtin.wait_for:
@@ -72,6 +132,7 @@
         state: started
         timeout: "{{ cgi_listener_timeout }}"
         msg: >-
-          CGI is not listening. Check launchctl print system/{{ cgi_launchd_service }},
+          CGI is not listening. Check launchctl print
+          {{ cgi_launchd_domain }}/{{ cgi_launchd_service }},
           {{ cgi_log_file }}, and the macOS launchd unified log.
       when: not ansible_check_mode

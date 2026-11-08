@@ -1,0 +1,7 @@
+---
+- name: Configure nginx and CGI on macOS with MacPorts
+  hosts: mother-host
+  become: true
+  roles:
+    - role: afakeman.service.nginx
+    - role: afakeman.service.cgi

@@ -4,11 +4,9 @@
   <dict>
     <key>Label</key>
     <string>{{ cgi_launchd_service | e }}</string>
-    <key>UserName</key>
-    <string>{{ cgi_user | e }}</string>
-    <!-- Create a security session for access to macOS speech services. -->
-    <key>SessionCreate</key>
-    <true/>
+    <!-- Use the logged-in user's Aqua session for macOS speech services. -->
+    <key>LimitLoadToSessionType</key>
+    <string>Aqua</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -31,6 +29,8 @@
     <string>{{ cgi_log_file | e }}</string>
     <key>EnvironmentVariables</key>
     <dict>
+      <key>HOME</key>
+      <string>{{ cgi_user_home | e }}</string>
       <key>PATH</key>
       <string>/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>

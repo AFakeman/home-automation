@@ -1,0 +1,53 @@
+---
+- name: Check whether the CGI LaunchAgent is loaded
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - print
+      - "{{ cgi_launchd_domain }}/{{ cgi_launchd_service }}"
+  register: cgi_agent_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Unload the previous CGI LaunchAgent definition when restarting
+  ansible.builtin.include_tasks: bootout.yml
+  vars:
+    cgi_bootout_target: "{{ cgi_launchd_domain }}/{{ cgi_launchd_service }}"
+  when:
+    - cgi_force_restart | default(false) | bool
+    - cgi_agent_status.rc == 0
+    - not ansible_check_mode
+
+# enable is idempotent but launchctl provides no useful changed indication.
+- name: Enable the CGI LaunchAgent at GUI login
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - enable
+      - "{{ cgi_launchd_domain }}/{{ cgi_launchd_service }}"
+  changed_when: false
+
+- name: Load the CGI LaunchAgent into the user's GUI session
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - bootstrap
+      - "{{ cgi_launchd_domain }}"
+      - "{{ cgi_plist_path }}"
+  when: cgi_agent_status.rc != 0 or (cgi_force_restart | default(false) | bool)
+
+- name: Start the CGI LaunchAgent if it was loaded but not running
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - kickstart
+      - "{{ cgi_launchd_domain }}/{{ cgi_launchd_service }}"
+  when:
+    - not (cgi_force_restart | default(false) | bool)
+    - cgi_agent_status.rc == 0
+    - "'state = running' not in cgi_agent_status.stdout"

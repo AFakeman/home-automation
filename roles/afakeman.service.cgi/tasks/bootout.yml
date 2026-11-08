@@ -1,0 +1,26 @@
+---
+# Catalina may report EINPROGRESS (36) while launchd tears a job down.
+# Accept that response only provisionally: do not continue until it is gone.
+- name: Request CGI job removal from launchd
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - bootout
+      - "{{ cgi_bootout_target }}"
+  register: cgi_bootout_result
+  failed_when: cgi_bootout_result.rc not in [0, 36]
+
+- name: Wait for the CGI job to leave launchd
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - print
+      - "{{ cgi_bootout_target }}"
+  register: cgi_bootout_status
+  changed_when: false
+  failed_when: false
+  until: cgi_bootout_status.rc != 0
+  retries: 30
+  delay: 1

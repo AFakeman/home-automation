@@ -1,7 +1,6 @@
 ---
 - name: Reload CGI
   listen: reload cgi service
-  become: true
-  community.general.launchd:
-    name: "{{ cgi_launchd_service }}"
-    state: restarted
+  ansible.builtin.include_tasks: "{{ role_path }}/tasks/ensure_running.yml"
+  vars:
+    cgi_force_restart: true
