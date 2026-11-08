@@ -1,49 +1,104 @@
 ---
-- name: Ensure Nginx
-  homebrew:
-    name:
-      - nginx
-
-- name: Ensure directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    recurse: true
-  loop:
-    - /usr/local/etc/nginx/conf.d/
-    - /usr/local/etc/nginx/includes.d/
-    - /usr/local/var/www/
-    - /usr/local/var/log/nginx/
-
-- name: Ensure Nginx config file
-  template:
-    src: nginx.conf.j2
-    dest: /usr/local/etc/nginx/nginx.conf
-    mode: 0644
-  notify: reload nginx
-
-- name: Ensure Nginx includes
-  copy:
-    src: "{{ item }}"
-    dest: "/usr/local/etc/nginx/includes.d/{{ item }}"
-    mode: 0644
-  loop:
-    - ssl.conf
-    - hsts.conf
-  notify: reload nginx service
-
-- name: Ensure LaunchAgent
+- name: Configure MacPorts nginx
   become: true
-  template:
-    src: org.nginx.server.plist.j2
-    dest: /Library/LaunchDaemons/org.nginx.server.plist
-    owner: root
-    group: admin
-    mode: 0644
-  notify: reload nginx service
+  environment:
+    PATH: /opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+  block:
+    - name: Require macOS
+      ansible.builtin.assert:
+        that: ansible_facts['system'] == 'Darwin'
+        fail_msg: This role requires macOS with MacPorts installed.
 
-- name: Ensure nginx is started
-  become: true
-  launchd:
-    state: started
-    name: org.nginx.server
+    - name: Check for MacPorts
+      ansible.builtin.stat:
+        path: /opt/local/bin/port
+      register: nginx_macports
+
+    - name: Require MacPorts
+      ansible.builtin.assert:
+        that: nginx_macports.stat.exists
+        fail_msg: Install MacPorts for your macOS release before running this role.
+
+    - name: Install nginx
+      community.general.macports:
+        name: nginx
+        state: present
+
+    - name: Create nginx directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: wheel
+        mode: '0755'
+      loop:
+        - "{{ nginx_config_dir }}/conf.d"
+        - "{{ nginx_config_dir }}/includes.d"
+        - "{{ nginx_www_dir }}"
+        - "{{ nginx_log_dir }}"
+
+    # Retain compatibility with configurations using the old include/ spelling.
+    - name: Provide the virtual-host include directory
+      ansible.builtin.file:
+        src: "{{ nginx_config_dir }}/includes.d"
+        dest: "{{ nginx_config_dir }}/include"
+        state: link
+
+    - name: Install nginx configuration
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: "{{ nginx_config_dir }}/nginx.conf"
+        owner: root
+        group: wheel
+        mode: '0644'
+      notify: Reload MacPorts nginx
+
+    # Kept available for explicit use; HTTP virtual hosts do not include these.
+    - name: Install nginx TLS and HSTS snippets
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ nginx_config_dir }}/includes.d/{{ item }}"
+        owner: root
+        group: wheel
+        mode: '0644'
+      loop:
+        - ssl.conf
+        - hsts.conf
+      notify: Reload MacPorts nginx
+
+    - name: Validate nginx configuration before starting
+      ansible.builtin.command:
+        argv:
+          - "{{ nginx_binary }}"
+          - -t
+          - -c
+          - "{{ nginx_config_dir }}/nginx.conf"
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Check whether the MacPorts nginx LaunchDaemon is loaded
+      ansible.builtin.command:
+        argv:
+          - /bin/launchctl
+          - print
+          - "system/{{ nginx_launchd_service }}"
+      register: nginx_launchd_status
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Enable and load nginx using MacPorts
+      ansible.builtin.command:
+        argv:
+          - /opt/local/bin/port
+          - load
+          - nginx
+      when: nginx_launchd_status.rc != 0
+
+    - name: Start the loaded MacPorts nginx LaunchDaemon
+      ansible.builtin.command:
+        argv:
+          - /bin/launchctl
+          - kickstart
+          - "system/{{ nginx_launchd_service }}"
+      when: "'state = running' not in nginx_launchd_status.stdout"

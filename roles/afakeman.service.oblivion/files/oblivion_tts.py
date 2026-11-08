@@ -8,6 +8,9 @@ import sys
 import tempfile
 
 
+SYNTHESIS_TIMEOUT_SECONDS = 20
+
+
 def respond(environ, output):
     dialogue_id = environ.get("PATH_INFO", "")[1:]
     dialogue = None
@@ -22,19 +25,40 @@ def respond(environ, output):
         output.write(b"Content-type: text/html; charset=UTF-8\r\n\r\nNot found.")
         return
 
-    with tempfile.TemporaryDirectory(prefix="oblivion-tts-") as directory:
-        sound = Path(directory) / "sound.wav"
-        subprocess.run(
-            ["/usr/bin/say", "-v", "Yuri", "-o", str(sound),
-             "--data-format=LEF32@22050", "--", dialogue],
-            check=True,
-            stdout=subprocess.DEVNULL,
+    try:
+        with tempfile.TemporaryDirectory(prefix="oblivion-tts-") as directory:
+            sound = Path(directory) / "sound.wav"
+            subprocess.run(
+                ["/usr/bin/say", "-v", "Yuri", "-o", str(sound),
+                 "--data-format=LEF32@22050", "--", dialogue],
+                check=True,
+                timeout=SYNTHESIS_TIMEOUT_SECONDS,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            audio = sound.read_bytes()
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as error:
+        print(
+            f"oblivion_tts: synthesis failed for {dialogue_id!r}: {error}; "
+            f"stderr={getattr(error, 'stderr', None)!r}",
+            file=sys.stderr,
+            flush=True,
         )
-        audio = sound.read_bytes()
+        # http.server's CGI handler sends HTTP 200 before executing the script;
+        # it does not translate a CGI Status header into an HTTP error status.
+        body = b"Speech synthesis failed or timed out. Check the CGI server log.\n"
         output.write(
-            f"Content-length: {len(audio)}\r\nContent-type: audio/wav\r\n\r\n".encode("ascii")
+            f"Content-length: {len(body)}\r\n"
+            "Content-type: text/plain; charset=UTF-8\r\n"
+            "Cache-Control: no-store\r\n\r\n".encode("ascii")
         )
-        output.write(audio)
+        output.write(body)
+        return
+
+    output.write(
+        f"Content-length: {len(audio)}\r\nContent-type: audio/wav\r\n\r\n".encode("ascii")
+    )
+    output.write(audio)
 
 
 if __name__ == "__main__":

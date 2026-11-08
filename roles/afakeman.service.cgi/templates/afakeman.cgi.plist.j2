@@ -3,24 +3,36 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>afakeman.cgi</string>
+    <string>{{ cgi_launchd_service | e }}</string>
+    <key>UserName</key>
+    <string>{{ cgi_user | e }}</string>
+    <!-- Create a security session for access to macOS speech services. -->
+    <key>SessionCreate</key>
+    <true/>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/python3</string>
-        <string>-m</string>
-        <string>http.server</string>
-        <string>--cgi</string>
-        <string>{{ cgi_port }}</string>
+      <string>{{ cgi_python_binary | e }}</string>
+      <string>-m</string>
+      <string>http.server</string>
+      <string>--cgi</string>
+      <string>--bind</string>
+      <string>127.0.0.1</string>
+      <string>{{ cgi_port }}</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>{{ cgi_dir }}</string>
+    <string>{{ cgi_dir | e }}</string>
     <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/cgi.log</string>
+    <string>{{ cgi_log_file | e }}</string>
     <key>StandardOutPath</key>
-    <string>/usr/local/var/log/cgi.log</string>
+    <string>{{ cgi_log_file | e }}</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string>/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
   </dict>
 </plist>

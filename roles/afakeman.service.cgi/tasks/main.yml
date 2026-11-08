@@ -1,20 +1,77 @@
 ---
+- name: Configure the CGI LaunchDaemon
+  become: true
+  environment:
+    PATH: /opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+  block:
+    - name: Require macOS
+      ansible.builtin.assert:
+        that: ansible_facts['system'] == 'Darwin'
+        fail_msg: This role requires macOS with MacPorts installed.
 
-- name: CGI | Ensure python3 install
-  homebrew:
-    name:
-      - python3
+    - name: Check for MacPorts
+      ansible.builtin.stat:
+        path: /opt/local/bin/port
+      register: cgi_macports
 
-- name: CGI | Ensure LaunchAgent
-  template:
-    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/afakeman.cgi.plist"
-    src: afakeman.cgi.plist.j2
-    owner: "{{ ansible_user }}"
-    group: admin
-    mode: 0644
-  notify: reload cgi service
+    - name: Require MacPorts
+      ansible.builtin.assert:
+        that: cgi_macports.stat.exists
+        fail_msg: Install MacPorts for your macOS release before running this role.
 
-- name: CGI Ensure CGI is started
-  launchd:
-    state: started
-    name: afakeman.cgi
+    - name: Install Python for the CGI server
+      community.general.macports:
+        name: "{{ cgi_python_port }}"
+        state: present
+
+    - name: Create CGI web and log directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: wheel
+        mode: '0755'
+      loop:
+        - "{{ cgi_dir }}"
+        - "{{ cgi_log_dir }}"
+
+    - name: Ensure the CGI user can write its log file
+      ansible.builtin.file:
+        path: "{{ cgi_log_file }}"
+        state: touch
+        owner: "{{ cgi_user }}"
+        group: wheel
+        mode: '0640'
+        access_time: preserve
+        modification_time: preserve
+      notify: Reload CGI
+
+    - name: Install CGI LaunchDaemon
+      ansible.builtin.template:
+        src: afakeman.cgi.plist.j2
+        dest: "{{ cgi_plist_path }}"
+        owner: root
+        group: wheel
+        mode: '0644'
+        validate: /usr/bin/plutil -lint %s
+      notify: Reload CGI
+
+    - name: Enable and start CGI LaunchDaemon
+      community.general.launchd:
+        name: "{{ cgi_launchd_service }}"
+        enabled: true
+        state: started
+
+    - name: Apply pending service changes before checking CGI
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify CGI is listening on localhost
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ cgi_port }}"
+        state: started
+        timeout: "{{ cgi_listener_timeout }}"
+        msg: >-
+          CGI is not listening. Check launchctl print system/{{ cgi_launchd_service }},
+          {{ cgi_log_file }}, and the macOS launchd unified log.
+      when: not ansible_check_mode

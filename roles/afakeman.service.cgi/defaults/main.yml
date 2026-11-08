@@ -1,3 +1,12 @@
 ---
+# Python 3.12 retains http.server --cgi; Python 3.15 removes it.
+cgi_python_port: python312
+cgi_python_binary: /opt/local/bin/python3.12
+cgi_user: "{{ ansible_user | default(ansible_facts['user_id']) }}"
 cgi_port: 8533
-cgi_dir: /usr/local/var/www/
+cgi_dir: "{{ nginx_www_dir | default('/opt/local/www') }}"
+cgi_log_dir: "{{ nginx_log_dir | default('/opt/local/var/log/nginx') }}"
+cgi_log_file: "{{ cgi_log_dir }}/cgi.log"
+cgi_launchd_service: afakeman.cgi
+cgi_plist_path: "/Library/LaunchDaemons/{{ cgi_launchd_service }}.plist"
+cgi_listener_timeout: 30

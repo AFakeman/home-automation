@@ -1,6 +1,8 @@
 ---
-- name: reload nginx service
-  include_tasks: reload_nginx_service.yml
-
-- name: reload nginx
-  include_tasks: reload_nginx.yml
+# A single task include runs validation and HUP sequentially. Do not chain a
+# notify from validation: changed_when: false would suppress the actual reload.
+- name: Reload MacPorts nginx
+  listen:
+    - reload nginx
+    - reload nginx service
+  ansible.builtin.include_tasks: "{{ role_path }}/tasks/reload_nginx.yml"

@@ -1,23 +1,25 @@
-- name: Oblivion | Ensure dialogue file
-  copy:
-    src: oblivion_dialogue.txt
-    dest: /usr/local/var/www/cgi-bin/
-    mode: 0644
-    owner: "{{ ansible_user }}"
-    group: admin
+---
+- name: Oblivion | Ensure CGI directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ oblivion_cgi_dir }}"
+    state: directory
+    owner: root
+    group: wheel
+    mode: '0755'
 
-- name: Oblivion | Ensure oblivion script
-  copy:
-    src: oblivion.py
-    dest: /usr/local/var/www/cgi-bin/
-    mode: 0755
+- name: Oblivion | Install dialogue and CGI scripts
+  become: true
+  ansible.builtin.copy:
+    src: "{{ item.name }}"
+    dest: "{{ oblivion_cgi_dir }}/{{ item.name }}"
+    mode: "{{ item.mode }}"
     owner: "{{ ansible_user }}"
     group: admin
-
-- name: Oblivion | Ensure oblivion tts script
-  copy:
-    src: oblivion_tts.py
-    dest: /usr/local/var/www/cgi-bin/
-    mode: 0755
-    owner: "{{ ansible_user }}"
-    group: admin
+  loop:
+    - name: oblivion_dialogue.txt
+      mode: '0644'
+    - name: oblivion.py
+      mode: '0755'
+    - name: oblivion_tts.py
+      mode: '0755'

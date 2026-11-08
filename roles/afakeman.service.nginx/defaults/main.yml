@@ -1,2 +1,6 @@
 ---
-# defaults file for roles/afakeman.service.nginx
+nginx_config_dir: /opt/local/etc/nginx
+nginx_log_dir: /opt/local/var/log/nginx
+nginx_www_dir: /opt/local/www
+nginx_binary: /opt/local/sbin/nginx
+nginx_launchd_service: org.macports.nginx

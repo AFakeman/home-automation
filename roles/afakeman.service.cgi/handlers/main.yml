@@ -1,5 +1,7 @@
 ---
-- name: reload cgi service
-  launchd:
-    state: reloaded
-    name: afakeman.cgi
+- name: Reload CGI
+  listen: reload cgi service
+  become: true
+  community.general.launchd:
+    name: "{{ cgi_launchd_service }}"
+    state: restarted

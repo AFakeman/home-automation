@@ -1,2 +1,3 @@
 ---
 oblivion_subdomain: "подлива"
+oblivion_cgi_dir: "{{ cgi_dir | default('/opt/local/www') }}/cgi-bin"

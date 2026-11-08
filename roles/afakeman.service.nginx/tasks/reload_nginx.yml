@@ -1,6 +1,20 @@
-- become: true
-  command: /usr/local/bin/nginx -t
-
-- name: Send HUP to nginx
+---
+# Also called directly by playbook-renew-certificate.yml.
+- name: Validate nginx configuration before reloading
   become: true
-  command: launchctl kill HUP system/org.nginx.server
+  ansible.builtin.command:
+    argv:
+      - "{{ nginx_binary }}"
+      - -t
+      - -c
+      - "{{ nginx_config_dir }}/nginx.conf"
+  changed_when: false
+
+- name: Send HUP to MacPorts nginx
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /bin/launchctl
+      - kill
+      - HUP
+      - "system/{{ nginx_launchd_service }}"
