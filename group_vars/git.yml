@@ -21,12 +21,6 @@ borgmatic_retention:
   keep_monthly: 3
 
 git_repo_list:
-  - name: blog
-    desc: Мой блог (https://блог.афакеман.рф)
-    section: public
-    hooks:
-      post-receive: "{{ lookup('file', 'blog/post-receive') }}"
-
   - name: home-automation
     desc: Скрипты для деплоя датацентра
     section: public
@@ -38,8 +32,3 @@ git_repo_list:
   - name: oblivion
     desc: "Скрипты для ковыряния файлов TES IV: Oblivion"
     section: private
-
-  - name: kubernetes
-    desc: Production-Grade Container Scheduling and Management
-    section: mirror
-    upstream: git@github.com:kubernetes/kubernetes.git

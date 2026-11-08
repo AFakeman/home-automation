@@ -1,5 +1,0 @@
----
-- name: Ensure Hugo
-  homebrew:
-    name:
-      - hugo
