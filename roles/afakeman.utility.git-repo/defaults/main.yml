@@ -1,4 +1,0 @@
----
-repo_base_path: "{{ ansible_env.HOME }}/git/"
-repo_name: ""
-repo_hooks: {}

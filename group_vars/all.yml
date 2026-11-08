@@ -5,36 +5,6 @@ domain_idn: "{{ domain.encode('idna').decode('ascii') }}"
 
 alt_domain: 'afakeman.com'
 
-tunnel_ip_address:
-  vpn: 192.168.65.1/24
-  mitm: 192.168.64.1/24
-
-tunnel_networks:
-  vpn: 192.168.65.0/24
-  mitm: 192.168.64.0/24
-
-tunnel_peers:
-  vpn:
-    - key: 1RbBS+6YmYPMztyH0SwTMIS35jE0KdYVdE0i87TUHlc=
-      address: 192.168.65.2/32
-    - key: Z4C1ETPbmiKWdSkt93wjmRgyfLujq8frwxF1omH8Szw=
-      address: 192.168.65.3/32
-    - key: d2MZn65oz8DbfZDVdhqFdmNS1rQuNBm+rMEmPwGJ4WE=
-      address: 192.168.65.4/32
-    - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
-      address: 192.168.65.5/32
-    - key: Oa1Mo+L6sFlAVd5++sMYbDq4BU2A3+75A7YOsjNFZQ4=
-      address: 192.168.65.6/32
-  mitm:
-    - key: 1RbBS+6YmYPMztyH0SwTMIS35jE0KdYVdE0i87TUHlc=
-      address: 192.168.64.2/32
-    - key: Z4C1ETPbmiKWdSkt93wjmRgyfLujq8frwxF1omH8Szw=
-      address: 192.168.64.3/32
-    - key: d2MZn65oz8DbfZDVdhqFdmNS1rQuNBm+rMEmPwGJ4WE=
-      address: 192.168.64.4/32
-    - key: T+4jkfE5IIszAM33jpKqRU/m7FcaTm12Vv+mqUkm22s=
-      address: 192.168.64.5/32
-
 cloudflare_email: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           65316332646136643435373634623861313239613032616137313638383238656638326537656666

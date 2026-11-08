@@ -1,5 +1,3 @@
 ---
 - import_playbook: playbook-nginx.yml
 - import_playbook: playbook-oblivion.yml
-- import_playbook: playbook-git.yml
-- import_playbook: playbook-vpn.yml

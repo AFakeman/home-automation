@@ -1,3 +1,0 @@
----
-
-git_subdomain_idn: "{{ git_subdomain.encode('idna').decode('ascii') }}"
