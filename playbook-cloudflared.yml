@@ -1,0 +1,5 @@
+---
+- name: Install and configure the Catalina cloudflared service
+  hosts: mother-host
+  roles:
+    - role: afakeman.service.cloudflared

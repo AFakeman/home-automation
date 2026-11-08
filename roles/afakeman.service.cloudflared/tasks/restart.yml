@@ -1,0 +1,16 @@
+---
+- name: Unload the previous cloudflared service
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /opt/local/bin/port
+      - unload
+      - "{{ cloudflared_package }}"
+
+- name: Load the updated cloudflared service
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /opt/local/bin/port
+      - load
+      - "{{ cloudflared_package }}"

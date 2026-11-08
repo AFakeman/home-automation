@@ -1,0 +1,182 @@
+---
+- name: Configure cloudflared through MacPorts
+  become: true
+  environment:
+    PATH: /opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+  block:
+    - name: Require macOS
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['system'] == 'Darwin'
+          - cloudflared_checkout.startswith('/')
+          - cloudflared_config_dir == '/opt/local/etc/cloudflared'
+        fail_msg: This role requires macOS and the default MacPorts prefix /opt/local.
+
+    - name: Require tunnel configuration
+      ansible.builtin.assert:
+        that:
+          - >-
+            (cloudflared_token | length > 0) or
+            ((cloudflared_config.get('tunnel', '') | length > 0) and
+             ((cloudflared_credentials | length > 0) or
+              (cloudflared_config.get('credentials-file', '') | length > 0)))
+        fail_msg: Supply cloudflared_token, or a tunnel configuration with credentials.
+      no_log: true
+
+    - name: Check for MacPorts
+      ansible.builtin.stat:
+        path: /opt/local/bin/port
+      register: cloudflared_macports
+
+    - name: Require MacPorts
+      ansible.builtin.assert:
+        that: cloudflared_macports.stat.exists
+        fail_msg: Install MacPorts and run port selfupdate before using this role.
+
+    - name: Install Git for the local ports repository
+      community.general.macports:
+        name: git
+        state: present
+
+    - name: Create local ports parent directory
+      ansible.builtin.file:
+        path: "{{ cloudflared_checkout | dirname }}"
+        state: directory
+        owner: root
+        group: wheel
+        mode: '0755'
+
+    - name: Clone the Catalina ports repository
+      ansible.builtin.git:
+        repo: "{{ cloudflared_repository }}"
+        dest: "{{ cloudflared_checkout }}"
+        version: "{{ cloudflared_version }}"
+        executable: /opt/local/bin/git
+        update: true
+      register: cloudflared_source
+
+    - name: Check for a local ports index
+      ansible.builtin.stat:
+        path: "{{ cloudflared_checkout }}/macports/PortIndex"
+      register: cloudflared_index
+
+    # portindex can exit successfully even when a Portfile failed to parse.
+    # Rebuild on every run so an existing empty/broken index is not retained.
+    - name: Rebuild and validate the local ports index
+      ansible.builtin.command:
+        argv:
+          - /opt/local/bin/portindex
+          - -f
+        chdir: "{{ cloudflared_checkout }}/macports"
+      register: cloudflared_portindex
+      changed_when: cloudflared_source.changed or not cloudflared_index.stat.exists
+      failed_when: >-
+        cloudflared_portindex.rc != 0 or
+        ('failed to parse' in (cloudflared_portindex.stdout ~ cloudflared_portindex.stderr) | lower) or
+        ('failed to index' in (cloudflared_portindex.stdout ~ cloudflared_portindex.stderr) | lower) or
+        ('error:' in (cloudflared_portindex.stdout ~ cloudflared_portindex.stderr) | lower)
+
+    - name: Register the local ports repository before standard sources
+      ansible.builtin.lineinfile:
+        path: /opt/local/etc/macports/sources.conf
+        line: "file://{{ cloudflared_checkout }}/macports"
+        insertbefore: BOF
+
+    - name: Verify MacPorts can resolve the local cloudflared package
+      ansible.builtin.command:
+        argv:
+          - /opt/local/bin/port
+          - info
+          - --name
+          - "{{ cloudflared_package }}"
+      changed_when: false
+
+    # The package depends on go-1.24 and owns the binary and launchd plist.
+    - name: Install the Catalina cloudflared package
+      community.general.macports:
+        name: "{{ cloudflared_package }}"
+        state: present
+      notify: Restart cloudflared
+
+    - name: Upgrade cloudflared when the local ports repository changes
+      ansible.builtin.command:
+        argv:
+          - /opt/local/bin/port
+          - upgrade
+          - "{{ cloudflared_package }}"
+      when: cloudflared_source.changed
+      register: cloudflared_upgrade
+      changed_when: "'--->' in cloudflared_upgrade.stdout"
+      notify: Restart cloudflared
+
+    - name: Create the private tunnel configuration directory
+      ansible.builtin.file:
+        path: "{{ cloudflared_config_dir }}"
+        state: directory
+        owner: root
+        group: wheel
+        mode: '0700'
+
+    - name: Install the tunnel token
+      ansible.builtin.copy:
+        content: "{{ cloudflared_token | trim }}\n"
+        dest: "{{ cloudflared_config_dir }}/token"
+        owner: root
+        group: wheel
+        mode: '0600'
+      when: cloudflared_token | length > 0
+      no_log: true
+      notify: Restart cloudflared
+
+    - name: Install locally managed tunnel credentials
+      ansible.builtin.copy:
+        content: "{{ cloudflared_credentials | to_nice_json }}\n"
+        dest: "{{ cloudflared_config_dir }}/credentials.json"
+        owner: root
+        group: wheel
+        mode: '0600'
+      when: cloudflared_credentials | length > 0 and cloudflared_token | length == 0
+      no_log: true
+      notify: Restart cloudflared
+
+    - name: Install tunnel configuration
+      ansible.builtin.template:
+        src: config.yml.j2
+        dest: "{{ cloudflared_config_dir }}/config.yml"
+        owner: root
+        group: wheel
+        mode: '0600'
+      no_log: true
+      notify: Restart cloudflared
+
+    - name: Apply service changes after configuration is ready
+      ansible.builtin.meta: flush_handlers
+
+    - name: Check whether cloudflared is loaded
+      ansible.builtin.command:
+        argv:
+          - /bin/launchctl
+          - print
+          - "system/{{ cloudflared_service }}"
+      register: cloudflared_launchd
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Load and enable cloudflared at boot
+      ansible.builtin.command:
+        argv:
+          - /opt/local/bin/port
+          - load
+          - "{{ cloudflared_package }}"
+      when: cloudflared_launchd.rc != 0
+
+    - name: Start cloudflared if it is loaded but not running
+      ansible.builtin.command:
+        argv:
+          - /bin/launchctl
+          - kickstart
+          - "system/{{ cloudflared_service }}"
+      when:
+        - cloudflared_launchd.rc == 0
+        - "'state = running' not in cloudflared_launchd.stdout"

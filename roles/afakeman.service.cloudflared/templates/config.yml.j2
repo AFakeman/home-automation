@@ -1,0 +1,7 @@
+{% if cloudflared_token | length > 0 %}
+{{ cloudflared_config | combine({'token-file': cloudflared_config_dir ~ '/token'}) | to_nice_yaml(indent=2) }}
+{% elif cloudflared_credentials | length > 0 %}
+{{ cloudflared_config | combine({'credentials-file': cloudflared_config_dir ~ '/credentials.json'}) | to_nice_yaml(indent=2) }}
+{% else %}
+{{ cloudflared_config | to_nice_yaml(indent=2) }}
+{% endif %}

@@ -1,0 +1,14 @@
+---
+cloudflared_repository: https://github.com/AFakeman/cloudflared.git
+cloudflared_version: catalina-compat
+cloudflared_checkout: /opt/local/var/macports/local/cloudflared
+cloudflared_package: cloudflared-catalina
+cloudflared_service: org.macports.cloudflared-catalina
+
+cloudflared_config_dir: /opt/local/etc/cloudflared
+# Remotely managed tunnel: supply this through Ansible Vault.
+cloudflared_token: ""
+# Locally managed tunnel: supply tunnel/ingress here and credentials below,
+# or specify credentials-file pointing to an already provisioned file.
+cloudflared_config: {}
+cloudflared_credentials: {}
