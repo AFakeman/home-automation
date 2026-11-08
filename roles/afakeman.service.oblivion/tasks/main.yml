@@ -8,7 +8,7 @@
 
 - name: Oblivion | Ensure oblivion script
   copy:
-    src: oblivion.sh
+    src: oblivion.py
     dest: /usr/local/var/www/cgi-bin/
     mode: 0755
     owner: "{{ ansible_user }}"
@@ -16,7 +16,7 @@
 
 - name: Oblivion | Ensure oblivion tts script
   copy:
-    src: oblivion_tts.sh
+    src: oblivion_tts.py
     dest: /usr/local/var/www/cgi-bin/
     mode: 0755
     owner: "{{ ansible_user }}"
